@@ -9,9 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Tim Green"]
   spec.email         = ["tiimgreen@gmail.com"]
 
-  spec.summary       = "Ensure all Gemfile gems are up-to-date"
-  spec.description   =
-    "Run secure_my_gemfile in your console to get any security issue/outdated dependency warnings in your Gemfile"
+  spec.summary       = "Check all gems are up-to-date and secure."
+  spec.description   = "Check all gems are up-to-date and secure."
   spec.homepage      = "https://github.com/tiimgreen/secure_my_gemfile"
   spec.license       = "MIT"
 
