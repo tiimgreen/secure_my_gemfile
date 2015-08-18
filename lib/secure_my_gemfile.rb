@@ -5,8 +5,9 @@ require 'yaml'
 require 'open-uri'
 
 require 'secure_my_gemfile/version'
-require 'secure_my_gemfile/checks'
 require 'secure_my_gemfile/lockfile'
+require 'secure_my_gemfile/gems_repo'
+require 'secure_my_gemfile/checks'
 
 module SecureMyGemfile
   class << self
@@ -30,19 +31,14 @@ module SecureMyGemfile
         return puts(' No insecure gems found!'.green.bold)
       end
 
-
       errors = check_for_insecurities(potentially_insecure_gems)
+
+      return puts(' No insecure gems found!'.green.bold) if errors.empty?
 
       puts ' ' + 'Insecure gems found:'.red.bold.underline
 
       errors.each do |error|
-        puts "   [" + "#{error[:name]} (#{error[:version]})".red.bold + "] #{error[:title].strip.bold.black}"
-
-        if error[:patched_versions]
-          puts "     * Please update #{error[:name]} to any of the following: #{error[:patched_versions]}"
-        end
-
-        puts '     * See more: ' + error[:url].light_blue + "\n\n"
+        print_error(error)
       end
     end
 
@@ -62,79 +58,18 @@ module SecureMyGemfile
       end
     end
 
-    def check_for_insecurities(potentially_insecure_gems)
-      errors = []
-
-      print ' '
-
-      potentially_insecure_gems.each do |ruby_gem|
-        get_repo_files(ruby_gem: ruby_gem).each do |error_file|
-          gem_in_gemfile = get_gem_in_gemfile(ruby_gem)
-          file = YAML.load(open(error_file.download_url).read)
-
-          current_version_vulnerable = true
-
-          current_version_vulnerable = false if using_patched_version?(file)
-
-          current_version_vulnerable = false if using_unaffected_version?(file)
-
-          print current_version_vulnerable ? '.'.bold.red : '.'.bold.green
-
-          next unless current_version_vulnerable
-
-          errors << {
-            name: ruby_gem,
-            version: gem_in_gemfile.version.version,
-            title: file['title'],
-            patched_versions: file['patched_versions'],
-            url: file['url']
-          }
-        end
-      end
-
-      puts ""
-
-      errors
-    end
-
     def get_gem_in_gemfile(ruby_gem)
       gems_in_gemfile.select { |g| g.name == ruby_gem }.first
     end
 
-    def using_patched_version?(file)
-      if file['patched_versions']
-        gem_in_gemfile = get_gem_in_gemfile(ruby_gem)
+    def print_error(error)
+      puts "   [" + "#{error[:name]} (#{error[:version]})".red.bold + "] #{error[:title].strip.bold.black}"
 
-        file['patched_versions'].each do |version|
-          if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
-            return true
-          end
-        end
+      if error[:patched_versions]
+        puts "     * Please update #{error[:name]} to any of the following: #{error[:patched_versions]}"
       end
 
-      false
-    end
-
-    def using_unaffected_version?(file)
-      if file['unaffected_versions']
-        gem_in_gemfile = get_gem_in_gemfile(ruby_gem)
-
-        file['unaffected_versions'].each do |version|
-          begin
-            if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
-              return true
-            end
-          rescue Gem::Requirement::BadRequirementError
-            version.split(', ').each do |version|
-              if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
-                return true
-              end
-            end
-          end
-        end
-      end
-
-      false
+      puts '     * See more: ' + error[:url].light_blue + "\n\n"
     end
   end
 end
