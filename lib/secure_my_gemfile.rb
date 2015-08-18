@@ -59,5 +59,3 @@ module SecureMyGemfile
     end
   end
 end
-
-SecureMyGemfile.run!
