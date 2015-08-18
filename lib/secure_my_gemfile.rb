@@ -32,14 +32,9 @@ module SecureMyGemfile
       end
 
       errors = check_for_insecurities(potentially_insecure_gems)
+      print_status(errors)
 
-      return puts(' No insecure gems found!'.green.bold) if errors.empty?
-
-      puts ' ' + 'Insecure gems found:'.red.bold.underline
-
-      errors.each do |error|
-        print_error(error)
-      end
+      errors.each { |error| print_error(error) }
     end
 
     def display_current_directory
@@ -70,6 +65,14 @@ module SecureMyGemfile
       end
 
       puts '     * See more: ' + error[:url].light_blue + "\n\n"
+    end
+
+    def print_status(errors)
+      if errors.empty?
+        puts ' No insecure gems found!'.green.bold
+      else
+        puts ' ' + 'Insecure gems found:'.red.bold.underline
+      end
     end
   end
 end
