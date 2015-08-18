@@ -69,35 +69,14 @@ module SecureMyGemfile
 
       potentially_insecure_gems.each do |ruby_gem|
         get_repo_files(ruby_gem: ruby_gem).each do |error_file|
-          gem_in_gemfile = gems_in_gemfile.select { |g| g.name == ruby_gem }.first
+          gem_in_gemfile = get_gem_in_gemfile(ruby_gem)
           file = YAML.load(open(error_file.download_url).read)
 
           current_version_vulnerable = true
 
-          if file['patched_versions']
-            file['patched_versions'].each do |version|
-              if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
-                current_version_vulnerable = false
-              end
-            end
-          end
+          current_version_vulnerable = false if using_patched_version?(file)
 
-          if file['unaffected_versions']
-            file['unaffected_versions'].each do |version|
-              begin
-                if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
-                  current_version_vulnerable = false
-                  puts "Errored due to unaffected_versions"
-                end
-              rescue Gem::Requirement::BadRequirementError
-                version.split(', ').each do |version|
-                  if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
-                    current_version_vulnerable = false
-                  end
-                end
-              end
-            end
-          end
+          current_version_vulnerable = false if using_unaffected_version?(file)
 
           print current_version_vulnerable ? '.'.bold.red : '.'.bold.green
 
@@ -116,6 +95,46 @@ module SecureMyGemfile
       puts ""
 
       errors
+    end
+
+    def get_gem_in_gemfile(ruby_gem)
+      gems_in_gemfile.select { |g| g.name == ruby_gem }.first
+    end
+
+    def using_patched_version?(file)
+      if file['patched_versions']
+        gem_in_gemfile = get_gem_in_gemfile(ruby_gem)
+
+        file['patched_versions'].each do |version|
+          if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
+            return true
+          end
+        end
+      end
+
+      false
+    end
+
+    def using_unaffected_version?(file)
+      if file['unaffected_versions']
+        gem_in_gemfile = get_gem_in_gemfile(ruby_gem)
+
+        file['unaffected_versions'].each do |version|
+          begin
+            if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
+              return true
+            end
+          rescue Gem::Requirement::BadRequirementError
+            version.split(', ').each do |version|
+              if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
+                return true
+              end
+            end
+          end
+        end
+      end
+
+      false
     end
   end
 end
