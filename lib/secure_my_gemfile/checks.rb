@@ -63,8 +63,8 @@ module SecureMyGemfile
               return true
             end
           rescue Gem::Requirement::BadRequirementError
-            version.split(', ').each do |version|
-              if Gem::Dependency.new('', version).match?('', gem_in_gemfile.version.version)
+            version.split(', ').each do |separate_version|
+              if Gem::Dependency.new('', separate_version).match?('', gem_in_gemfile.version.version)
                 return true
               end
             end
