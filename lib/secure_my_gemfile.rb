@@ -27,10 +27,6 @@ module SecureMyGemfile
     private
 
     def print_errors
-      unless potentially_insecure_gems.any?
-        return puts(' No insecure gems found!'.green.bold)
-      end
-
       errors = check_for_insecurities(potentially_insecure_gems)
       print_status(errors)
 
