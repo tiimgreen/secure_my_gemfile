@@ -14,12 +14,6 @@ module SecureMyGemfile
 
     def run!(**options)
       puts ' Checking Gemfile.lock...'.light_blue.bold
-      # display_current_directory
-
-
-      # TODO: Remove when deploying
-      login_github
-
       display_version if options[:version]
       print_errors
     end
@@ -40,13 +34,6 @@ module SecureMyGemfile
     def display_version
       puts "secure_my_gemfile version #{SecureMyGemfile::VERSION}".light_blue
       exit 0
-    end
-
-    def login_github
-      Octokit.configure do |c|
-        c.login = 'tiimgreen'
-        c.password = ENV["GITHUB_PASSWORD"]
-      end
     end
 
     def get_gem_in_gemfile(ruby_gem)
